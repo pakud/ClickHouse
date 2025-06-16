@@ -1,3 +1,5 @@
+import copy
+
 from praktika import Job
 
 from ci.defs.defs import ArtifactNames, BuildTypes, JobNames, RunnerLabels
@@ -17,6 +19,19 @@ build_digest_config = Job.CacheDigestConfig(
     ],
     with_git_submodules=True,
 )
+
+ast_fuzzer_common_config = Job.Config(
+    name=JobNames.ASTFUZZER,
+    runs_on=["..params.."],
+    command=f"python3 ./ci/jobs/ast_buzz_fuzzer_job.py",
+    digest_config=Job.CacheDigestConfig(
+        include_paths=["./ci/docker/fuzzer", "./ci/jobs/ast_buzz_fuzzer_job.py"],
+    ),
+    run_in_docker="clickhouse/fuzzer+--tmpfs /tmp/clickhouse",
+    allow_merge_on_failure=True,
+)
+buzz_fuzzer_common_config = copy.deepcopy(ast_fuzzer_common_config)
+buzz_fuzzer_common_config.name = JobNames.BUZZHOUSE
 
 common_ft_job_config = Job.Config(
     name=JobNames.STATELESS,
@@ -595,15 +610,7 @@ class JobConfigs:
         ],
         requires=[["Build (amd_release)"], ["Build (arm_release)"]],
     )
-    ast_fuzzer_jobs = Job.Config(
-        name=JobNames.ASTFUZZER,
-        runs_on=["..params.."],
-        command=f"cd ./tests/ci && python3 ci.py --run-from-praktika",
-        digest_config=Job.CacheDigestConfig(
-            include_paths=["./ci/docker/fuzzer", "./tests/ci/ci_fuzzer_check.py"],
-        ),
-        allow_merge_on_failure=True,
-    ).parametrize(
+    ast_fuzzer_jobs = ast_fuzzer_common_config.parametrize(
         parameter=[
             "amd_debug",
             "arm_asan",
@@ -619,22 +626,14 @@ class JobConfigs:
             RunnerLabels.FUNC_TESTER_AMD,
         ],
         requires=[
-            ["Build (amd_debug)"],
-            ["Build (arm_asan)"],
-            ["Build (amd_tsan)"],
-            ["Build (amd_msan)"],
-            ["Build (amd_ubsan)"],
+            [ArtifactNames.CH_AMD_DEBUG],
+            [ArtifactNames.CH_ARM_ASAN],
+            [ArtifactNames.CH_AMD_TSAN],
+            [ArtifactNames.CH_AMD_MSAN],
+            [ArtifactNames.CH_AMD_UBSAN],
         ],
     )
-    buzz_fuzzer_jobs = Job.Config(
-        name=JobNames.BUZZHOUSE,
-        runs_on=["..params.."],
-        command=f"cd ./tests/ci && python3 ci.py --run-from-praktika",
-        digest_config=Job.CacheDigestConfig(
-            include_paths=["./ci/docker/fuzzer", "./tests/ci/ci_fuzzer_check.py"],
-        ),
-        allow_merge_on_failure=True,
-    ).parametrize(
+    buzz_fuzzer_jobs = buzz_fuzzer_common_config.parametrize(
         parameter=[
             "amd_debug",
             "arm_asan",
@@ -650,11 +649,11 @@ class JobConfigs:
             RunnerLabels.FUNC_TESTER_AMD,
         ],
         requires=[
-            ["Build (amd_debug)"],
-            ["Build (arm_asan)"],
-            ["Build (amd_tsan)"],
-            ["Build (amd_msan)"],
-            ["Build (amd_ubsan)"],
+            [ArtifactNames.CH_AMD_DEBUG],
+            [ArtifactNames.CH_ARM_ASAN],
+            [ArtifactNames.CH_AMD_TSAN],
+            [ArtifactNames.CH_AMD_MSAN],
+            [ArtifactNames.CH_AMD_UBSAN],
         ],
     )
     performance_comparison_with_prev_release_jobs = Job.Config(

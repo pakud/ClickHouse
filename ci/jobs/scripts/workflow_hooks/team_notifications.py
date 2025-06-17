@@ -19,6 +19,8 @@ def check():
             )
             break
 
+    return True
+
 
 if __name__ == "__main__":
     if not check():

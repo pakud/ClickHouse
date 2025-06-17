@@ -11,6 +11,7 @@
 #include <Interpreters/AddDefaultDatabaseVisitor.h>
 #include <Interpreters/TranslateQualifiedNamesVisitor.h>
 #include <Interpreters/getHeaderForProcessingStage.h>
+#include <Interpreters/ClusterFunctionReadTask.h>
 
 #include <Processors/Sources/RemoteSource.h>
 #include <Processors/Transforms/AddingDefaultsTransform.h>
@@ -118,7 +119,12 @@ RemoteQueryExecutor::Extension StorageURLCluster::getTaskIteratorExtension(const
 {
     auto iterator = std::make_shared<StorageURLSource::DisclosedGlobIterator>(
         uri, context->getSettingsRef()[Setting::glob_expansion_max_elements], predicate, getVirtualsList(), context);
-    auto callback = std::make_shared<TaskIterator>([iter = std::move(iterator)](size_t) mutable -> String { return iter->next(); });
+
+    auto next_callback = [iter = std::move(iterator)](size_t) mutable -> ClusterFunctionReadTaskPtr
+    {
+        return std::make_shared<ClusterFunctionReadTask>(iter->next());
+    };
+    auto callback = std::make_shared<TaskIterator>(std::move(next_callback));
     return RemoteQueryExecutor::Extension{.task_iterator = std::move(callback)};
 }
 

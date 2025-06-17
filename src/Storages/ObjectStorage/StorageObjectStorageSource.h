@@ -1,6 +1,7 @@
 #pragma once
 #include <Common/re2.h>
 #include <Interpreters/Context_fwd.h>
+#include <Interpreters/ClusterFunctionReadTask.h>
 #include <IO/Archives/IArchiveReader.h>
 #include <Processors/SourceWithKeyCondition.h>
 #include <Processors/Executors/PullingPipelineExecutor.h>
@@ -13,8 +14,6 @@ namespace DB
 {
 
 class SchemaCache;
-
-using ReadTaskCallback = std::function<String()>;
 
 class StorageObjectStorageSource : public SourceWithKeyCondition
 {
@@ -151,15 +150,14 @@ protected:
 class StorageObjectStorageSource::ReadTaskIterator : public IObjectIterator
 {
 public:
-    ReadTaskIterator(const ReadTaskCallback & callback_, size_t max_threads_count);
+    ReadTaskIterator(const ClusterFunctionReadTaskCallback & callback_, size_t max_threads_count);
 
     ObjectInfoPtr next(size_t) override;
 
     size_t estimatedKeysCount() override { return buffer.size(); }
 
 private:
-
-    ReadTaskCallback callback;
+    ClusterFunctionReadTaskCallback callback;
     ObjectInfos buffer;
     std::atomic_size_t index = 0;
 };

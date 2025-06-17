@@ -5,6 +5,8 @@
 
 namespace DB
 {
+struct ClusterFunctionReadTask;
+using ClusterFunctionReadTaskPtr = std::shared_ptr<ClusterFunctionReadTask>;
 
 /// Base class for working with multiple replicas (connections)
 /// from one shard within a single thread
@@ -28,7 +30,7 @@ public:
 
     virtual void sendQueryPlan(const QueryPlan & query_plan) = 0;
 
-    virtual void sendReadTaskResponse(const String &) = 0;
+    virtual void sendClusterFunctionReadTaskResponse(const ClusterFunctionReadTask &) = 0;
     virtual void sendMergeTreeReadTaskResponse(const ParallelReadResponse & response) = 0;
 
     /// Get packet from any replica.

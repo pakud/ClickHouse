@@ -824,8 +824,11 @@ def test_restart_broken_table_function(started_cluster, use_delta_kernel):
     assert int(instance.query(f"SELECT count() FROM {TABLE_NAME}")) == 100
 
 
-@pytest.mark.parametrize("use_delta_kernel", ["1", "0"])
-def test_partition_columns(started_cluster, use_delta_kernel):
+@pytest.mark.parametrize(
+    "use_delta_kernel, cluster",
+    [("1", False), ("1", True), ("0", False)],
+)
+def test_partition_columns(started_cluster, use_delta_kernel, cluster):
     instance = started_cluster.instances["node1"]
     spark = started_cluster.spark_session
     minio_client = started_cluster.minio_client
@@ -897,7 +900,10 @@ def test_partition_columns(started_cluster, use_delta_kernel):
     assert len(files) > 0
     print(f"Uploaded files: {files}")
 
-    table_function = f"deltaLake('http://{started_cluster.minio_ip}:{started_cluster.minio_port}/{bucket}/{result_file}/', 'minio', '{minio_secret_key}', SETTINGS allow_experimental_delta_kernel_rs={use_delta_kernel})"
+    if cluster:
+        table_function = f"deltaLakeCluster(cluster, 'http://{started_cluster.minio_ip}:{started_cluster.minio_port}/{bucket}/{result_file}/', 'minio', '{minio_secret_key}', SETTINGS allow_experimental_delta_kernel_rs={use_delta_kernel})"
+    else:
+        table_function = f"deltaLake('http://{started_cluster.minio_ip}:{started_cluster.minio_port}/{bucket}/{result_file}/', 'minio', '{minio_secret_key}', SETTINGS allow_experimental_delta_kernel_rs={use_delta_kernel})"
 
     result = instance.query(f"describe table {table_function}").strip()
     assert (

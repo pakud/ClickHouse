@@ -50,6 +50,8 @@ struct ProfileInfo;
 class TCPServer;
 class NativeWriter;
 class NativeReader;
+struct ClusterFunctionReadTask;
+using ClusterFunctionReadTaskPtr = std::shared_ptr<ClusterFunctionReadTask>;
 
 /// State of query processing.
 struct QueryState
@@ -273,7 +275,9 @@ private:
     bool receivePacketsExpectData(QueryState & state) TSA_REQUIRES(callback_mutex);
     bool receivePacketsExpectDataConcurrentWithExecutor(QueryState & state);
     void receivePacketsExpectCancel(QueryState & state) TSA_REQUIRES(callback_mutex);
-    String receiveReadTaskResponse(QueryState & state) TSA_REQUIRES(callback_mutex);
+
+    ClusterFunctionReadTaskPtr receiveClusterFunctionReadTaskResponse(QueryState & state) TSA_REQUIRES(callback_mutex);
+
     std::optional<ParallelReadResponse> receivePartitionMergeTreeReadTaskResponse(QueryState & state) TSA_REQUIRES(callback_mutex);
 
     void processCancel(QueryState & state, bool throw_exception = true) TSA_REQUIRES(callback_mutex);

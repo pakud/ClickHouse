@@ -39,6 +39,8 @@ using Connections = std::vector<ConnectionPtr>;
 class NativeReader;
 class NativeWriter;
 
+struct ClusterFunctionReadTask;
+using ClusterFunctionReadTaskPtr = std::shared_ptr<ClusterFunctionReadTask>;
 
 /** Connection with database server, to use by client.
   * How to use - see Core/Protocol.h
@@ -148,7 +150,7 @@ public:
     /// You could pass size of serialized/compressed block.
     void sendPreparedData(ReadBuffer & input, size_t size, const String & name = "");
 
-    void sendReadTaskResponse(const String &);
+    void sendClusterFunctionReadTaskResponse(const ClusterFunctionReadTask & response);
     /// Send all scalars.
     void sendScalarsData(Scalars & data);
     /// Send parts' uuids to excluded them from query processing
